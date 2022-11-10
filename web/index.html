@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        html, body {
+            overflow: hidden;
+        }
+        body {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+  <canvas id="canvas" width="5000" height="5000" style="transform: translate(0px, 0px) scale(1); transform-origin: top left; image-rendering: pixelated; border: 2px solid red;"/>
+</body>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set line width
+    ctx.lineWidth = 10;
+
+    // Wall
+    ctx.strokeRect(75, 140, 150, 110);
+
+    // Door
+    ctx.fillRect(130, 190, 40, 60);
+
+    // Roof
+    ctx.beginPath();
+    ctx.moveTo(50, 140);
+    ctx.lineTo(150, 60);
+    ctx.lineTo(250, 140);
+    ctx.closePath();
+    ctx.stroke();
+
+    let scale = 1,
+        panning = false,
+        offsetX = 0, // offset from the left corner of the screen
+        offsetY = 0, // offset from the top corner of the sreen
+        start = { x: 0, y: 0 } // position when mouse was down relative to the canvas (screen - offset)
+    
+    // function to set transform based on variables
+    function setTransform() {
+        canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    }
+    // onmousedown event
+    canvas.onmousedown = (e) => {
+        e.preventDefault();
+        start = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+        panning = true;
+    }
+    // onmouseup event
+    canvas.onmouseup = (e) => {
+        e.preventDefault();
+        panning = false;
+    }
+    // onmousemove event
+    canvas.onmousemove = (e) => {
+        e.preventDefault();
+        if (!panning) {
+            return;
+        }
+        offsetX = (e.clientX - start.x);
+        offsetY = (e.clientY - start.y);
+        setTransform();
+        console.log(`PC - scale: ${scale} | panning: ${panning} | offsetX: ${offsetX} | offsetY: ${offsetY} | startX: ${start.x} | startY: ${start.y}`);
+    }
+    // onwheel event
+    canvas.onwheel = (e) => {
+        e.preventDefault();
+        const xs = (e.clientX - offsetX) / scale, // position of the mouse relative to the canvas devided by current scale. (doesnt't change when scale changes)
+            ys = (e.clientY - offsetY) / scale, // position of the mouse relative to the canvas devided by current scale. (doesnt't change when scale changes)
+            delta = -e.deltaY; // mouse delta (was: scrolling down - positive, now: scrolling down - negative)
+        delta > 0 ? scale *= 1.15 : scale /= 1.15; // scrolling down - zoom out, scrolling up - zoom in
+        offsetX = e.clientX - xs * scale; // new offsetX. Screen position - (postiion of mouse relative to the canvas devided by scale) * scale
+        offsetY = e.clientY - ys * scale; // new offsetY. Screen position - (postiion of mouse relative to the canvas devided by scale) * scale
+        setTransform();
+        // console.log(`${e.clientX} - ${xs} * ${scale} = ${offsetX}`);
+        // console.log(`${e.clientY} - ${ys} * ${scale} = ${offsetY}`);
+        console.log(`PC - scale: ${scale} | panning: ${panning} | offsetX: ${offsetX} | offsetY: ${offsetY} | startX: ${start.x} | startY: ${start.y}`);
+    }
+
+
+    // PHONE SUPPORT
+    let previousTouch = {x: 0, y: 0};
+    canvas.ontouchstart = (e) => {
+        e.preventDefault();
+        console.log(e);
+        start = { x: e.touches[0].clientX - offsetX, y: e.touches[0].clientY - offsetY };
+        panning = true;
+    }
+    canvas.ontouchend = (e) => {
+        e.preventDefault();
+        panning = false;
+    }
+    canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        if (!e.touches[1]) {
+            if (!panning) {
+                return;
+            }
+            offsetX = (e.touches[0].clientX - start.x);
+            offsetY = (e.touches[0].clientY - start.y);
+            setTransform();
+            console.log(`MOBILE - scale: ${scale} | panning: ${panning} | offsetX: ${offsetX} | offsetY: ${offsetY} | startX: ${start.x} | startY: ${start.y}`);
+        } else {
+            const midpoint = {x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2};
+            const xs = (midpoint.x - offsetX) / scale, // position of the mouse relative to the canvas devided by current scale. (doesnt't change when scale changes)
+                ys = (midpoint.y - offsetY) / scale // position of the mouse relative to the canvas devided by current scale. (doesnt't change when scale changes)
+            previousTouch.x < e.touches[0].clientX || previousTouch.y < e.touches[0].clientY ? scale *= 1.05 : scale /= 1.05; // scrolling down - zoom out, scrolling up - zoom in
+            previousTouch.x = e.touches[0].clientX;
+            previousTouch.y = e.touches[0].clientY;
+            offsetX = midpoint.x - xs * scale; // new offsetX. Screen position - (postiion of mouse relative to the canvas devided by scale) * scale
+            offsetY = midpoint.y - ys * scale; // new offsetY. Screen position - (postiion of mouse relative to the canvas devided by scale) * scale
+            setTransform();
+            // console.log(`${e.clientX} - ${xs} * ${scale} = ${offsetX}`);
+            // console.log(`${e.clientY} - ${ys} * ${scale} = ${offsetY}`);
+            console.log(`MOBILE - scale: ${scale} | panning: ${panning} | offsetX: ${offsetX} | offsetY: ${offsetY} | startX: ${start.x} | startY: ${start.y}`);
+        }
+    }
+</script>
+</html>
